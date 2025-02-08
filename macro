@@ -1,0 +1,131 @@
+Sub Форматирование_Таблицы()
+    Dim ws As Worksheet
+    Dim lastRow As Long, lastColumn As Long
+    Dim keepCols As Variant
+    Dim keepColIndex As Collection
+    Dim data As Variant, newData() As Variant
+    Dim i As Long, j As Long, newColIndex As Long
+    
+    Set ws = ActiveSheet
+    
+    Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
+    Application.EnableEvents = False
+    
+    On Error GoTo ErrorHandler
+    
+    ws.Rows("1:2").Delete
+    
+    keepCols = Array("Дата и время", "Тип события", "Пользователь", "Терминал", "Комментарий", _
+                     "№ заказа", "Сумма", "Официант", "Скидка/надбавка %", "Список позиций заказа", _
+                     "Тип скидки/надбавки", "Сумма со скидкой", "Номер стола")
+    
+    lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+    lastColumn = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    
+    data = ws.Range(ws.Cells(1, 1), ws.Cells(lastRow, lastColumn)).Value
+    Set keepColIndex = New Collection
+    For i = 1 To lastColumn
+        If Not IsError(Application.Match(data(1, i), keepCols, 0)) Then
+            keepColIndex.Add i
+        End If
+    Next i
+    
+    ReDim newData(1 To lastRow, 1 To keepColIndex.Count)
+    For i = 1 To lastRow
+        newColIndex = 1
+        For j = 1 To keepColIndex.Count
+            newData(i, newColIndex) = data(i, keepColIndex(j))
+            newColIndex = newColIndex + 1
+        Next j
+    Next i
+    
+    ws.Cells.Clear
+    ws.Range("A1").Resize(UBound(newData, 1), UBound(newData, 2)).Value = newData
+    
+    ws.Activate
+    ws.Cells(1, 1).Select
+    ActiveWindow.ScrollRow = 1
+
+    ActiveWindow.FreezePanes = False
+
+    ws.Cells(2, 1).Select
+
+    ActiveWindow.FreezePanes = True
+
+    Set keepColIndex = New Collection
+    For i = LBound(keepCols) To UBound(keepCols)
+        For j = 1 To lastColumn
+            If data(1, j) = keepCols(i) Then
+                keepColIndex.Add j
+                Exit For
+            End If
+        Next j
+    Next i
+
+    ws.Rows(1).AutoFilter
+    
+    lastRow = ws.Cells(ws.Rows.Count, "B").End(xlUp).Row
+    For Each cell In ws.Range("B2:B" & lastRow)
+        Select Case cell.Value
+            Case "Добавление позиции в заказ": cell.Interior.Color = RGB(240, 248, 255)
+            Case "Добавление скидки/надбавки", "Удаление скидки/надбавки": cell.Interior.Color = RGB(255, 105, 180)
+            Case "Закрытие кассовой смены": cell.Interior.Color = RGB(220, 20, 60): cell.Font.Color = RGB(255, 255, 255)
+            Case "Закрытие личной смены": cell.Interior.Color = RGB(178, 34, 34): cell.Font.Color = RGB(255, 255, 255)
+            Case "Закрытие смены": cell.Interior.Color = RGB(139, 0, 0): cell.Font.Color = RGB(255, 255, 255)
+            Case "Изъятие наличных": cell.Interior.Color = RGB(218, 165, 32)
+            Case "Оплата заказа": cell.Interior.Color = RGB(60, 179, 113)
+            Case "Оплата заказа без выручки": cell.Interior.Color = RGB(144, 238, 144)
+            Case "Открытие заказа": cell.Interior.Color = RGB(135, 206, 250)
+            Case "Открытие личной смены": cell.Interior.Color = RGB(65, 105, 225): cell.Font.Color = RGB(255, 255, 255)
+            Case "Открытие смены": cell.Interior.Color = RGB(0, 0, 139): cell.Font.Color = RGB(255, 255, 255)
+            Case "Перенос заказа": cell.Interior.Color = RGB(75, 0, 130): cell.Font.Color = RGB(255, 255, 255)
+            Case "Печать X-отчета": cell.Interior.Color = RGB(105, 105, 105): cell.Font.Color = RGB(255, 255, 255)
+            Case "Печать на кухню": cell.Interior.Color = RGB(240, 230, 140)
+            Case "Печать товарного чека": cell.Interior.Color = RGB(255, 250, 205)
+            Case "Разделение позиции заказа": cell.Interior.Color = RGB(123, 104, 238): cell.Font.Color = RGB(255, 255, 255)
+            Case "Внесение наличных": cell.Interior.Color = RGB(238, 232, 170)
+            Case "Сторнирование чека": cell.Interior.Color = RGB(255, 69, 0)
+            Case "Удаление заказа": cell.Interior.Color = RGB(255, 160, 122)
+            Case "Удаление неотпечатанных позиций заказа": cell.Interior.Color = RGB(255, 127, 80)
+            Case "Удаление отпечатанных позиций заказа": cell.Interior.Color = RGB(250, 128, 114)
+            Case "Открытие денежного ящика": cell.Interior.Color = RGB(66, 72, 92): cell.Font.Color = RGB(255, 255, 255)
+            Case "Распечатка пречека": cell.Interior.Color = RGB(57, 61, 80): cell.Font.Color = RGB(255, 255, 255)
+            Case Else: cell.Interior.ColorIndex = xlNone
+        End Select
+    Next cell
+    
+    ws.Columns("A").ColumnWidth = 14.44
+    ws.Columns("B").ColumnWidth = 25.22
+    ws.Columns("C").ColumnWidth = 18
+    ws.Columns("D").ColumnWidth = 22.5
+    ws.Columns("E").ColumnWidth = 24
+    ws.Columns("F").ColumnWidth = 10.56
+    ws.Columns("G").ColumnWidth = 8.11
+    ws.Columns("H").ColumnWidth = 12
+    ws.Columns("I").ColumnWidth = 8.11
+    ws.Columns("J").ColumnWidth = 57.78
+    ws.Columns("K").ColumnWidth = 11.56
+    ws.Columns("L").ColumnWidth = 10.56
+    ws.Columns("M").ColumnWidth = 7.78
+
+    MsgBox "Форматирование завершено!", vbInformation
+
+    With ws.Rows(1).Interior
+        .Pattern = xlSolid
+        .ThemeColor = xlThemeColorDark1
+        .TintAndShade = -0.25
+    End With
+    
+    ws.Columns("A:N").Borders.LineStyle = xlContinuous
+    ws.Columns("A:N").Borders.Weight = xlThin
+    
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+    Application.EnableEvents = True
+    
+    Exit Sub
+
+ErrorHandler:
+    MsgBox "Ошибка: " & Err.Description, vbCritical
+End Sub
