@@ -94,7 +94,8 @@ Sub Форматирование_Таблицы()
             Case Else: cell.Interior.ColorIndex = xlNone
         End Select
     Next cell
-    
+
+    ws.Columns("A").NumberFormat = "dd.mm.yyyy hh:mm:ss"
     ws.Columns("A").ColumnWidth = 14.44
     ws.Columns("B").ColumnWidth = 25.22
     ws.Columns("C").ColumnWidth = 18
